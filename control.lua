@@ -21,8 +21,14 @@ local ignoredEntityNames = {
   "",
 }
 
--- Add the entity to the list of entities being built
-script.on_event(defines.events.on_built_entity, function(event)
+-- List of events on which to call the "StartBuilding" function
+local eventsToStartBuilding = {
+    defines.events.on_built_entity,
+    defines.events.on_robot_built_entity
+}
+
+-- Add the entity to the list of entities being built..
+script.on_event(eventsToStartBuilding, function(event)
     local entity = event.created_entity
 
     -- Ignore entities that are not valid
@@ -32,15 +38,19 @@ script.on_event(defines.events.on_built_entity, function(event)
     StartBuilding(entity)
 end)
 
+-- List of events on which to call the "RemoveEntityFromBuildList" function
+local eventsToRemoveEntityFromBuildList = {
+    defines.events.on_player_mined_entity,
+    defines.events.on_entity_died,
+    defines.events.on_robot_mined_entity
+}
+
 -- Remove the entity from the list of entities being built
-script.on_event(defines.events.on_player_mined_entity, function(event)
+script.on_event(eventsToRemoveEntityFromBuildList, function(event)
     RemoveEntityFromBuildList(event.entity)
 end)
 
-script.on_event(defines.events.on_entity_died, function(event)
-    RemoveEntityFromBuildList(event.entity)
-end)
-
+-- Progressing buildings on every 5th tick.
 script.on_nth_tick(5, function ()
     local globalAllEntitiesBeingBuilt = global.allEntitiesBeingBuilt
 
@@ -140,6 +150,11 @@ function ReplaceEntity(entity)
         surface = entity.surface
     }
 
+    -- Check if the entity is a assembling machine. If it is, save the recipe it is currently crafting.
+    if entity.type == "assembling-machine" then
+        entityData.recipe = entity.get_recipe()
+    end
+
     -- Remove the old entity.
     entity.destroy({raise_destroy = true})
 
@@ -152,6 +167,11 @@ function ReplaceEntity(entity)
         create_build_effect_smoke = true,
         raise_built = true
     })
+
+    -- Check if the entity is a assembling machine. If it is, set the recipe it is currently crafting.
+    if entityData.recipe then
+        entityData.surface.find_entity(entityData.name, entityData.position).set_recipe(entityData.recipe)
+    end
 end
 
 -- Returns true if the given value is contained in the table
