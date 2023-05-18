@@ -1,5 +1,5 @@
--- Initialize the list of entities to ignore
-local ignoredEntities = {
+-- Initialize the list of entitiy-types to ignore
+local ignoredEntityTypes = {
   "unit",
   "unit-spawner",
   "explosion",
@@ -11,6 +11,13 @@ local ignoredEntities = {
   "logistic-container",
   "electric-energy-interface",
   "entity-ghost",
+  "",
+}
+
+-- Initialize the list of entitiy-names to ignore
+local ignoredEntityNames = {
+  "entity-ghost",
+  "mining-depot",
   "",
 }
 
@@ -57,8 +64,11 @@ function StartBuilding(entity)
     -- Check if the entity is still valid
     if not entity.valid then return end
 
-    -- Ignore entities that are in the list of ignored entities
-    if table.contains(ignoredEntities, entity.type) then return end
+    -- Ignore entities with types that are in the list of ignored entities
+    if table.contains(ignoredEntityTypes, entity.type) then return end
+
+    -- Ignore entities with names that are in the list of ignored entities
+    if table.contains(ignoredEntityNames, entity.name) then return end
 
     -- Check if the entity has a health value, if yes, set it to 1
     if entity.health then
@@ -88,13 +98,9 @@ function ProgressBuilding(entity)
     if entity.health >= entity.prototype.max_health then
         -- Remove the entity from the list of entities being built
         RemoveEntityFromBuildList(entity)
-
-        -- Activate the entity
-        entity.active = true
-        entity.operable = true
-
-        -- Change the force of this entity to the player force, so it can be repaired by robots
-        entity.force = game.forces.player
+        
+        -- Replace the entity
+        ReplaceEntity(entity)
         return
     end
 end
@@ -119,6 +125,33 @@ function RemoveEntityFromBuildList(entity)
             end
         end
     end
+end
+
+-- Replaces the given entity with a new entity with the exact same settings, but the player force.
+function ReplaceEntity(entity)
+    -- Check if the entity is still valid
+    if not entity.valid then return end
+
+    -- Save the existing entity's data.
+    local entityData = {
+        direction = entity.direction,
+        name = entity.name,
+        position = entity.position,
+        surface = entity.surface
+    }
+
+    -- Remove the old entity.
+    entity.destroy({raise_destroy = true})
+
+    -- Create a new entity with the same settings as the old one.
+    entityData.surface.create_entity({
+        name = entityData.name,
+        position = entityData.position,
+        direction = entityData.direction,
+        force = game.forces.player,
+        create_build_effect_smoke = true,
+        raise_built = true
+    })
 end
 
 -- Returns true if the given value is contained in the table
