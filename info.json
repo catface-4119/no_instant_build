@@ -1,0 +1,9 @@
+{
+    "name": "no_instant_build",
+    "version": "0.1.0",
+    "title": "No Instant Build",
+    "author": "Catface-4911",
+    "factorio_version": "1.1",
+    "dependencies": ["base >= 1.1"],
+    "description": "Prevents instant build of entities. Instead, they will be built over time."
+  }
