@@ -110,7 +110,7 @@ function ProgressBuilding(entity)
         RemoveEntityFromBuildList(entity)
         
         -- Replace the entity
-        ReplaceEntity(entity)
+        FinishEntity(entity)
         return
     end
 end
@@ -138,40 +138,18 @@ function RemoveEntityFromBuildList(entity)
 end
 
 -- Replaces the given entity with a new entity with the exact same settings, but the player force.
-function ReplaceEntity(entity)
+function FinishEntity(entity)
     -- Check if the entity is still valid
     if not entity.valid then return end
 
-    -- Save the existing entity's data.
-    local entityData = {
-        direction = entity.direction,
-        name = entity.name,
-        position = entity.position,
-        surface = entity.surface
-    }
+    -- Reactivate the entity and make it operable
+    entity.active = true
+    entity.operable = true
 
-    -- Check if the entity is a assembling machine. If it is, save the recipe it is currently crafting.
-    if entity.type == "assembling-machine" then
-        entityData.recipe = entity.get_recipe()
-    end
+    -- Change the force of this entity to the player force
+    entity.force = game.forces.player
 
-    -- Remove the old entity.
-    entity.destroy({raise_destroy = true})
-
-    -- Create a new entity with the same settings as the old one.
-    entityData.surface.create_entity({
-        name = entityData.name,
-        position = entityData.position,
-        direction = entityData.direction,
-        force = game.forces.player,
-        create_build_effect_smoke = true,
-        raise_built = true
-    })
-
-    -- Check if the entity is a assembling machine. If it is, set the recipe it is currently crafting.
-    if entityData.recipe then
-        entityData.surface.find_entity(entityData.name, entityData.position).set_recipe(entityData.recipe)
-    end
+    script.raise_script_built({entity = entity})
 end
 
 -- Returns true if the given value is contained in the table
