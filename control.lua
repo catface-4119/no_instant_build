@@ -47,6 +47,32 @@ local eventsToRemoveEntityFromBuildList = {
 
 -- Remove the entity from the list of entities being built
 script.on_event(eventsToRemoveEntityFromBuildList, function(event)
+    -- Check if the event is the on_player_mined_entity event
+    if event.name == defines.events.on_player_mined_entity then
+        -- Get the name of the mined entity and the event inventory
+        local entityName = event.entity.name
+        local eventInventory = event.buffer
+
+        -- Check if the eventInventory contains the entity
+        local eventIntentoryContents = eventInventory.get_contents()
+
+        for itemName, itemCount in pairs(eventIntentoryContents) do
+            -- Check if the item is the entity that was mined
+            if itemName == entityName then
+                -- Yes, we do have to get the stack here, because the get_contents() function returns the count of the items in the inventory, and not the stacks.
+                -- We want the stacks so we can set the health.
+                -- Find the entity by name in the event inventory
+                local entityStack = eventInventory.find_item_stack(entityName)
+
+                -- Check if we got a valid item-stack
+                if entityStack then
+                    -- Set the health of the stack to 1
+                    entityStack.health = 1
+                end
+            end
+        end
+    end
+
     RemoveEntityFromBuildList(event.entity)
 end)
 
